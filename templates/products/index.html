@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="Content">
+<!-- 페이지 헤더 -->
+<div class="page-header text-center">
+    <h1>중고 물품 목록</h1>
+</div>
+
+<!-- 검색 및 정렬 -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <form class="search-form d-flex" method="GET">
+            <input type="text" name="search" class="form-control me-2" placeholder="검색어 입력" value="{{ search }}">
+            <button class="btn btn-primary" type="submit">검색</button>
+        </form>
+    </div>
+    <div class="col-md-6 text-end">
+        <div class="btn-group">
+            <a href="?sort=latest{% if search %}&search={{ search }}{% endif %}" 
+                class="btn btn-outline-primary {% if sort == 'latest' %}active{% endif %}">최신순</a>
+            <a href="?sort=popularity{% if search %}&search={{ search }}{% endif %}" 
+                class="btn btn-outline-primary {% if sort == 'popularity' %}active{% endif %}">인기순</a>
+        </div>
+        <a href="{% url 'products:create' %}" class="btn btn-primary">물품 등록</a>
+    </div>
+</div>
+
+<!-- 상품 목록 -->
+<div class="products-grid">
+    {% for product in products %}
+    <div class="card">
+        {% if product.image %}
+            <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.title }}">
+        {% endif %}
+        <div class="card-body">
+            <h5 class="card-title">{{ product.title }}</h5>
+            <p class="price">{{ product.price }}원</p>
+            <p class="card-text">
+                <small class="text-muted">
+                    조회수: {{ product.view_count }} | 
+                    좋아요: {{ product.likes.count }}
+                </small>
+            </p>
+            <div class="hashtags mb-2">
+                {% for tag in product.hashtags.all %}
+                    <span class="badge bg-secondary">#{{ tag.name }}</span>
+                {% endfor %}
+            </div>
+            <a href="{% url 'products:detail' product.pk %}" class="btn btn-primary w-100">상세보기</a>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <p class="text-center">등록된 물품이 없습니다.</p>
+    </div>
+    {% endfor %}
+</div>
+</div>
+{% endblock %}

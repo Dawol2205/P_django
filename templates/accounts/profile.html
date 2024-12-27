@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+<div class="row">
+    <!-- 프로필 정보 -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                {% if profile_user.profile_image %}
+                    <img src="{{ profile_user.profile_image.url }}" class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;" alt="프로필 이미지">
+                {% else %}
+                    <img src="{% static 'images/default_profile.png' %}" class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;" alt="기본 프로필 이미지">
+                {% endif %}
+                
+                {% if user == profile_user %}
+                    <form method="POST" enctype="multipart/form-data" class="mb-3">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="{{ form.profile_image.id_for_label }}" class="form-label">프로필 사진 변경</label>
+                            {{ form.profile_image }}
+                        </div>
+                        <button type="submit" class="btn btn-primary">업데이트</button>
+                    </form>
+                {% endif %}
+                
+                <h4 class="card-title">{{ profile_user.username }}</h4>
+                <p class="text-muted">가입일: {{ profile_user.date_joined|date:"Y-m-d" }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <!-- 탭 메뉴 -->
+        <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="products-tab" data-bs-toggle="tab" data-bs-target="#products" type="button" role="tab">등록한 물품</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="likes-tab" data-bs-toggle="tab" data-bs-target="#likes" type="button" role="tab">찜한 물품</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="posts-tab" data-bs-toggle="tab" data-bs-target="#posts" type="button" role="tab">작성한 게시글</button>
+            </li>
+        </ul>
+
+        <!-- 탭 내용 -->
+        <div class="tab-content" id="myTabContent">
+            <!-- 등록한 물품 -->
+            <div class="tab-pane fade show active" id="products" role="tabpanel">
+                <div class="row">
+                    {% for product in user_products %}
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                {% if product.image %}
+                                    <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.title }}" style="height: 200px; object-fit: cover;">
+                                {% endif %}
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ product.title }}</h5>
+                                    <p class="card-text">{{ product.price }}원</p>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            조회수: {{ product.view_count }} | 
+                                            찜: {{ product.likes.count }}
+                                        </small>
+                                    </p>
+                                    <a href="{% url 'products:detail' product.pk %}" class="btn btn-primary">상세보기</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p>등록한 물품이 없습니다.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 찜한 물품 -->
+            <div class="tab-pane fade" id="likes" role="tabpanel">
+                <div class="row">
+                    {% for product in liked_products %}
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                {% if product.image %}
+                                    <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.title }}" style="height: 200px; object-fit: cover;">
+                                {% endif %}
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ product.title }}</h5>
+                                    <p class="card-text">{{ product.price }}원</p>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            판매자: {{ product.user.username }} |
+                                            조회수: {{ product.view_count }}
+                                        </small>
+                                    </p>
+                                    <a href="{% url 'products:detail' product.pk %}" class="btn btn-primary">상세보기</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p>찜한 물품이 없습니다.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 작성한 게시글 -->
+            <div class="tab-pane fade" id="posts" role="tabpanel">
+                <div class="list-group">
+                    {% for post in user_posts %}
+                        <a href="{% url 'board:detail' post.pk %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{{ post.title }}</h5>
+                                <small class="text-muted">{{ post.created_at|date:"Y-m-d" }}</small>
+                            </div>
+                            <p class="mb-1">{{ post.content|truncatechars:100 }}</p>
+                            <small class="text-muted">댓글 {{ post.comments.count }}개</small>
+                        </a>
+                    {% empty %}
+                        <p>작성한 게시글이 없습니다.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<style>
+.nav-tabs .nav-link {
+color: #495057;
+}
+
+.nav-tabs .nav-link.active {
+color: #007bff;
+font-weight: bold;
+}
+
+.tab-content {
+padding: 20px 0;
+}
+
+.card {
+transition: transform 0.2s;
+box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.card:hover {
+transform: translateY(-5px);
+}
+
+.list-group-item {
+transition: background-color 0.2s;
+}
+
+.list-group-item:hover {
+background-color: #f8f9fa;
+}
+
+.card-img-top {
+border-top-left-radius: calc(0.25rem - 1px);
+border-top-right-radius: calc(0.25rem - 1px);
+}
+
+.rounded-circle {
+box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.form-control {
+border-radius: 0.25rem;
+}
+
+.btn-primary {
+background-color: #007bff;
+border-color: #007bff;
+}
+
+.btn-primary:hover {
+background-color: #0056b3;
+border-color: #0056b3;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h2 class="text-center mb-4">
+            {% if product %}물품 수정{% else %}물품 등록{% endif %}
+        </h2>
+        
+        <form method="POST" enctype="multipart/form-data" class="card p-4 shadow-sm">
+            {% csrf_token %}
+            
+            <!-- 제목 필드 -->
+            <div class="mb-3">
+                <label for="{{ form.title.id_for_label }}" class="form-label">제목</label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                    {% for error in form.title.errors %}
+                        <div class="alert alert-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <!-- 내용 필드 -->
+            <div class="mb-3">
+                <label for="{{ form.content.id_for_label }}" class="form-label">내용</label>
+                {{ form.content }}
+                {% if form.content.errors %}
+                    {% for error in form.content.errors %}
+                        <div class="alert alert-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <!-- 가격 필드 -->
+            <div class="mb-3">
+                <label for="{{ form.price.id_for_label }}" class="form-label">가격</label>
+                {{ form.price }}
+                {% if form.price.errors %}
+                    {% for error in form.price.errors %}
+                        <div class="alert alert-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <!-- 이미지 필드 -->
+            <div class="mb-3">
+                <label for="{{ form.image.id_for_label }}" class="form-label">이미지</label>
+                {{ form.image }}
+                {% if form.image.errors %}
+                    {% for error in form.image.errors %}
+                        <div class="alert alert-danger">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+                {% if product.image %}
+                    <div class="mt-2">
+                        <img src="{{ product.image.url }}" alt="현재 이미지" class="img-thumbnail" style="max-height: 200px;">
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- 해시태그 필드 -->
+            <div class="mb-3">
+                <label for="hashtags" class="form-label">해시태그</label>
+                <input type="text" id="hashtags" name="hashtags" class="form-control" 
+                        value="{{ form.hashtags.value|default:'' }}" 
+                        placeholder="쉼표로 구분하여 입력 (예: 태그1, 태그2)">
+                <div id="hashtag-suggestions" class="list-group mt-2"></div>
+                <small class="form-text text-muted">쉼표로 구분하여 여러 개의 해시태그를 입력할 수 있습니다.</small>
+            </div>
+
+            <!-- 버튼 -->
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">
+                    {% if product %}수정하기{% else %}등록하기{% endif %}
+                </button>
+                <a href="{% url 'products:index' %}" class="btn btn-secondary">취소</a>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+
+<script>
+let debounceTimeout;
+
+document.getElementById('hashtags').addEventListener('input', function(e) {
+clearTimeout(debounceTimeout);
+const query = e.target.value;
+
+debounceTimeout = setTimeout(() => {
+    if (query.length > 0) {
+        axios.get(`/products/search-hashtags/?query=${query}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            const suggestions = document.getElementById('hashtag-suggestions');
+            suggestions.innerHTML = '';
+            
+            response.data.forEach(tag => {
+                const item = document.createElement('a');
+                item.className = 'list-group-item list-group-item-action';
+                item.textContent = `#${tag.name}`;
+                item.href = '#';
+                item.onclick = (e) => {
+                    e.preventDefault();
+                    const currentTags = document.getElementById('hashtags').value
+                        .split(',')
+                        .map(t => t.trim())
+                        .filter(t => t);
+                    
+                    if (!currentTags.includes(tag.name)) {
+                        currentTags.push(tag.name);
+                        document.getElementById('hashtags').value = currentTags.join(', ');
+                    }
+                    suggestions.innerHTML = '';
+                };
+                suggestions.appendChild(item);
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    } else {
+        document.getElementById('hashtag-suggestions').innerHTML = '';
+    }
+}, 300);
+});
+
+// 이미지 미리보기 기능
+document.getElementById('{{ form.image.id_for_label }}').addEventListener('change', function(e) {
+const file = e.target.files[0];
+if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const previewContainer = document.querySelector('.img-thumbnail');
+        if (previewContainer) {
+            previewContainer.src = e.target.result;
+        } else {
+            const newPreview = document.createElement('img');
+            newPreview.src = e.target.result;
+            newPreview.alt = '이미지 미리보기';
+            newPreview.className = 'img-thumbnail mt-2';
+            newPreview.style.maxHeight = '200px';
+            document.querySelector('.mb-3:nth-child(4)').appendChild(newPreview);
+        }
+    }
+    reader.readAsDataURL(file);
+}
+});
+</script>
+{% endblock %}
