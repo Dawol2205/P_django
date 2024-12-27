@@ -3,6 +3,7 @@
 ## 💡 프로젝트 소개
 Django 기반의 중고거래 및 커뮤니티 웹사이트입니다. 사용자들이 중고 물품을 등록하고 거래할 수 있으며, 게시판을 통해 소통할 수 있는 플랫폼입니다.
 
+[ERD문서] https://github.com/Dawol2205/P_django/blob/main/erd.json
 ## 🛠 기술 스택
 - **Frontend**: HTML, CSS, JavaScript
   - Bootstrap 5
