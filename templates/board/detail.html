@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {% extends 'base.html' %}
 {% load static %}
 
@@ -170,4 +171,178 @@ font-size: 0.9rem;
 margin-right: 5px;
 }
 </style>
+=======
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+<div class="card mb-4">
+    <div class="card-body">
+        <h2 class="card-title">{{ post.title }}</h2>
+        <p class="text-muted">
+            작성자: {{ post.user.username }} | 
+            작성일: {{ post.created_at|date:"Y-m-d H:i" }} | 
+            조회수: {{ post.view_count }}
+        </p>
+        {% if post.image %}
+            <img src="{{ post.image.url }}" class="img-fluid mb-3" alt="{{ post.title }}">
+        {% endif %}
+        <div class="card-text mb-3">
+            {{ post.content|linebreaksbr }}
+        </div>
+        
+        {% if user == post.user %}
+            <div class="mb-3">
+                <a href="{% url 'board:update' post.pk %}" class="btn btn-primary">수정</a>
+                <button class="btn btn-danger delete-btn" data-post-id="{{ post.pk }}">삭제</button>
+            </div>
+        {% endif %}
+        <a href="{% url 'board:index' %}" class="btn btn-secondary">목록으로</a>
+    </div>
+</div>
+
+<!-- 댓글 섹션 -->
+<div class="card">
+    <div class="card-body">
+        <h5>댓글 (<span id="comment-count">{{ post.comments.count }}</span>)</h5>
+        
+        {% if user.is_authenticated %}
+            <form id="comment-form" class="mb-4">
+                {% csrf_token %}
+                {{ comment_form.content }}
+                <button type="submit" class="btn btn-primary mt-2">댓글 작성</button>
+            </form>
+        {% endif %}
+
+        <div id="comments-list">
+            {% for comment in post.comments.all %}
+                <div class="comment mb-3" id="comment-{{ comment.id }}">
+                    <strong>{{ comment.user.username }}</strong>
+                    <small class="text-muted">{{ comment.created_at|date:"Y-m-d H:i" }}</small>
+                    <p class="mb-1">{{ comment.content }}</p>
+                </div>
+            {% empty %}
+                <p id="no-comments">댓글이 없습니다.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+// 댓글 생성 기능
+document.getElementById('comment-form')?.addEventListener('submit', function(e) {
+e.preventDefault();
+
+const formData = new FormData();
+formData.append('content', this.querySelector('textarea').value);
+
+axios.post(`/board/{{ post.pk }}/comment/`, formData, {
+    headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+    }
+})
+.then(response => {
+    if (response.data.status === 'success') {
+        // 댓글이 없다는 메시지 제거
+        const noComments = document.getElementById('no-comments');
+        if (noComments) {
+            noComments.remove();
+        }
+
+        // 새 댓글 추가
+        const commentsList = document.getElementById('comments-list');
+        const newComment = document.createElement('div');
+        newComment.className = 'comment mb-3';
+        newComment.id = `comment-${response.data.comment_id}`;
+        newComment.innerHTML = `
+            <strong>${response.data.username}</strong>
+            <small class="text-muted">${response.data.created_at}</small>
+            <p class="mb-1">${response.data.content}</p>
+        `;
+        commentsList.insertBefore(newComment, commentsList.firstChild);
+        
+        // 댓글 수 업데이트
+        const commentCount = document.getElementById('comment-count');
+        commentCount.textContent = parseInt(commentCount.textContent) + 1;
+        
+        // 폼 초기화
+        this.reset();
+    }
+})
+.catch(error => {
+    console.error('Error:', error);
+    alert('댓글 작성 중 오류가 발생했습니다.');
+});
+});
+
+// 게시글 삭제 기능
+document.querySelector('.delete-btn')?.addEventListener('click', function() {
+if (confirm('정말 삭제하시겠습니까?')) {
+    const postId = this.dataset.postId;
+    
+    axios.delete(`/board/${postId}/delete/`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => {
+        if (response.data.status === 'success') {
+            alert('성공적으로 삭제되었습니다.');
+            window.location.href = '{% url "board:index" %}';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert(error.response?.data?.message || '삭제 중 오류가 발생했습니다.');
+    });
+}
+});
+</script>
+
+<style>
+.comment {
+padding: 15px;
+border-bottom: 1px solid #eee;
+}
+
+.comment:last-child {
+border-bottom: none;
+}
+
+.comment strong {
+color: #333;
+margin-right: 10px;
+}
+
+.comment small {
+color: #666;
+}
+
+.comment p {
+margin-top: 5px;
+color: #444;
+}
+
+textarea.form-control {
+min-height: 100px;
+}
+
+.card-title {
+color: #333;
+font-weight: bold;
+}
+
+.text-muted {
+font-size: 0.9rem;
+}
+
+.btn {
+margin-right: 5px;
+}
+</style>
+>>>>>>> e86b7b9f37d611aad436361104d1f4cb0dea76e7
 {% endblock %}
